@@ -1,0 +1,19 @@
+Username: Ndcaspers
+Name: Nicholas Caspers
+
+Daily Work Listed
+
+Purpose: Simply messing around with block chaining in python. Specifically, the goal is to create a more "tree" like chain as oppose to a single array/linked-list chain. Additionally, the incorporation of multiple ledgers for kicks and giggles with the users as creators of said chains
+
+Key:
+    #, general note for later or for that current day
+    -, means a note of want or potential fix
+    X, means this bug has been paused, ignored, or abandoned
+    *, general accomplishement without an original bug
+    -*, accomplished a particular fix or want
+    (4 spaces)^, Notes to the record above, should contain specifics
+    (4 spaces)^*, Notes to the above record, specifically after a fixed bug
+    (xh ym), the amount of time spent on project on a particular day
+
+
+===1/1/2018===
