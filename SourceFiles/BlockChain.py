@@ -10,100 +10,256 @@ import hashlib
 
 class BlockChain:
 
-	## Data members
-	# Names
-	chainName = ""
-	chainDirPath = ""
-	chainFilePath = ""
-	chainTransactionsPath = ""
-	chainConfigPath = ""
+    ## Data members
+    # Names
+    chainName = ""
+    chainDirPath = ""
+    chainFilePath = ""
+    UnconfTransactPath = ""
+    configPath = ""
 
-	# Current Chain
-	memChain = True
-	chain = []
-	currentTransactions = []
+    # Owner
+    owner = ""
+    
 
-	#################################################
-	# Constructor
-	def __init__(self, chainName, memChain=True):
+    # Chain Blocks and Transactions
+    memChain = True
+    chain = []
+    #confTransactions = []
+    unconfTransactions = []
 
-		## setup data members
-		# setup the files
-		self.chainName = chainName
-		setupChainFiles()
+    #################################################
+    # Constructor
+    def __init__(self, chainName, memChain=True):
 
-		# bring chain in memory
-		self.memChain = memChain
+        ## setup data members
+        # setup the files
+        self.chainName = chainName
+        self.setupChainFiles()
 
-		if(memChain):
-			setupMemChain()
-		
+        # Check chain file
+        chainFile = open(self.chainFilePath, 'r')
+        noLines = not(chainFile.readline())
+        chainFile.close()
 
-	# Constructor Helper Functions
-	def setupChainFiles(self):
+        if(noLines):
+            
+            self.rootBlock = Block(0, 0, 0, [], 0, self.hashString(self.owner), 0)
+            self.writeRootBlock()
 
-		# setup dir path
-		self.chainDirPath = "../Chains/" + self.chainName
+        # Chain to Memory
+        self.memChain = memChain
 
-		# setup the other file paths
-		self.chainFilePath = self.chaiDirPath + "/" + self.chainName + ".chain"
-		self.chainCurrentTransactions = self.chainDirPath + "/" + self.chainName + "_transactions.chain"
-		self.chainConfigPath = self.chainDirPath + "/" + self.chainName + ".config"
+        if(memChain):
+            self.setupMemChain()
+            
 
-	##################################################
-	# Class Methods
-	
+    # Constructor Helper Functions
+    def setupChainFiles(self):
 
-	##################################################
-	# Helper Functions
-	def setupMemChain(self):
-		
-		# Read-in Blocks from files
-		chainFile = open(self.chainFilePath, 'r')
-		
-		currentLine = chainFile.readline()
-		currentBlockLines = []
+        # setup dir path
+        self.chainDirPath = "../Chains/" + self.chainName
 
-		while(currentLine):
+        # setup the other file paths
+        self.chainFilePath = self.chaiDirPath + "/" + self.chainName + ".chain"
+        self.unconfTransactPath = self.chainDirPath + "/" + self.chainName + "_transactions.chain"
+        self.configPath = self.chainDirPath + "/" + self.chainName + ".config"
 
-			# If "index" new block"
-			if(currentLine[5:] == "index"):
+    def writeRootBlock(self):
 
-				# add the block if there was a block read
-				if(len(currenBlockLines) != 0):
-					addBlockFromLines(currentBlockLines)
+        # write the root block attributes into the file
+        niceBlockString = self.rootBlock.toNiceString()
+        
+        chainFile = open(self.chainFilePath, 'w')
+        chainFile.write(niceBlockString)
+        chainFile.close()
+        
+    ##################################################
+    # Class Methods
+    def newBlock(self, proof, proofType, prevBlock):
+        
+        # Create the new block
+        index = (previous.getIndex() * 3) + proofType
+        prevHash = hashBlock(prevBlock)
+        newBlock = Block(index, proofType, time(), self.unconfTransactions, proof, prevHash)
 
-				# start reading in the new block
-				currentBlockLines = [currentLine]
+        # add it to the chain in its proper place
+        self.chain.insert(index, newBlock)
 
-			# Increment
-			currentLine = chainFile.readline()
+        # need to rewrite the file
+        chainFile = open(self.chainFilePath, 'w')
+        chainFile.write(chain[0].toNiceString())
+        chainFile.close()
 
-	def addBlockFromLines(self, blockLines):
+        chainFile = open(self.chainFilePath, 'a')
 
-		## Parse lines
-		index = int( (blockLines[0].split(':'))[-1] )
-		timeStamp = float( (blockLines[1].split(':'))[-1] )
+        for i in range(1, len(chain)):
 
-		# run through transactions
-		transactions =[]
+            blockString = chain[i].toNiceString()
+            chainFile.write(blockString)
 
-		for i in range(2, len(blockLines) - 2, 3):
+        chainFile.close()
 
-			# create Transaction and append
-			sender = ((blockLines[i]).split(':'))[-1]
-			reciever = ((blockLines[i + 1]).split(':'))[-1]
-			amount = float( ((blockLines[i + 2]).split(':'))[-1] )
+        # reset the unconfirmed transactions
+        self.unconfTransactions = []
 
-			transaction = Transaction(sender, reciever, amount)
-			transactions.append(transaction)
+        return newBlock
+        
 
-		proof = blockLines[-2].split(':')
-		previousHash = blockLines[-1].split(':')
+    def newTransaction(self, sender, reciever, amount):
 
-		# add block to the list
-		block = Block(index, timeStamp, transactions, proof, previousHash)
-		self.chain[block]
+        # create a new transaction
+        transaction = Transaction(sender, reciever, amount)
+
+        # need to check if the transaction is possibel
+        if(validTransaction):
+            addUnconfTransaction(transaction)
+            self.unconfTransactions.append(transaction)
+            return False
+
+        else:
+            return True
+
+    ##################################################
+    ## Helper Functions
+    # Chain File reading helpers functions
+    def setupMemChain(self):
+            
+        # Read-in Blocks from files
+        chainFile = open(self.chainFilePath, 'r')
+            
+        currentLine = chainFile.readline()
+        currentBlockLines = []
+
+        while(currentLine):
+
+            # If empty, no block yet
+            if(currentLine == ""):
+                addEmptyBlock()
+
+            # If "index" new block"
+            elif(currentLine[5:] == "index"):
+
+                # add the block if there was a block read
+                if(len(currenBlockLines) != 0):
+                    addBlockFromLines(currentBlockLines)
+
+                # start reading in the new block
+                currentBlockLines = [currentLine]
+
+            # Increment
+            currentLine = chainFile.readline()
+
+        # close the file
+        chainFile.close() 
+
+    def addEmptyBlock(self):
+    
+        # Create an empty block and add it to the list
+        emptyBlock = Block(-1, -1, -1, [], -1, -1)
+        self.chain.append(emptyBlock)
+
+    def addBlockFromLines(self, blockLines):
+
+        ## Parse lines
+        index = int( (blockLines[0].split(':'))[-1] )
+        blockType = int ( (blockLines[1].split(':'))[-1] )
+        timeStamp = float( (blockLines[2].split(':'))[-1] )
+
+        # run through transactions
+        transactions = []
+
+        for i in range(3, len(blockLines) - 2, 3):
+
+            # create Transaction and append
+            sender = ((blockLines[i]).split(':'))[-1]
+            reciever = ((blockLines[i + 1]).split(':'))[-1]
+            amount = float( ((blockLines[i + 2]).split(':'))[-1] )
+
+            transaction = Transaction(sender, reciever, amount)
+            transactions.append(transaction)
+
+        proof = blockLines[-2].split(':')
+        previousHash = blockLines[-1].split(':')
+
+        # add block to the list
+        block = Block(index, blockType, timeStamp, transactions, proof, previousHash)
+        self.chain[index](block)
+
+    # Mem Block manipulation helper functions
+    def hashBlock(block):
+
+        # encode in unicode string and return
+        blockString = block.toString()
+        unicodeBlockString = blockString.encode()
+
+        return hashlib.sha256(uniBlockString).hexdigest()
 
 
+    # Transaction helper functions
+    def validTransaction(self, transaction):
+
+        # get sender balance
+        sender = transaction.sender
+        sendingAmount = transaction.amount
+
+        senderBalance = 0.0
+
+        # check if owner
+        ownerFlag = (sender == self.owner)
+
+        # run through each block
+        for block in chain:
+
+            if(ownerFlag and block.getIndex() != -1 and block.getTimeStamp != -1 and len(block.getTransactions()) == 0):
+                senderBalance += 0.01
+
+            if(block.getMiner() == sender):
+                senderBalance += 1.0
+
+            for currentTransact in block.getTransactions():
+
+                if(currentTransact.sender == sender):
+                    senderBalance += currentTransact.amount
+
+                elif(currentTransact.reciever == sender):
+                    senderBalance -= currentTransact.amount
+
+        # run through the unconfirmed transactions
+        for unconfTransact in unconfTransactions:
+
+            # check if sending amount vs balance
+            if(currentTransact.sender == sender):
+                senderBalance += currentTransact.amount
+
+            elif(currentTransact.reciever == sender):
+                senderBalance -= currentTransact.amount
+
+        # check amount vs sender balance
+        return (sendingAmount <= senderBalance) 
+
+    def addUnconfTransaction(self, transaction):
+
+        # add to memory list
+        self.unconfTransactions.append(transaction)
+
+        # add to file
+        sender = "sender:" + String(transaction.sender) + "\n"
+        reciever = "reciever:" + String(transaction.reciever) + "\n"
+        amount = "amount:" + String(transaction.amount) + "\n"
+
+        unconfTransactionFile = open(self.unconfTransactPath, 'a')
+
+        unconfTransactionFile.write(sender)
+        unconfTransactionFile.write(reciever)
+        unconfTransactionFile.write(amount)
+
+
+    # Generic Helper Functions
+    def hashString(string):
+
+        unicodeString = string.encode()
+        return hashlib.sha256(unicodeString).hexdigest()
+
+        
 

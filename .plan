@@ -16,4 +16,8 @@ Key:
     (xh ym), the amount of time spent on project on a particular day
 
 
-===1/1/2018===
+===11/3/2018===
+
+- create the blockchain class for a node
+- create the block class maintaining the blocks
+- create the transaction class for maintianing transactions
