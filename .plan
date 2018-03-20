@@ -28,4 +28,13 @@ Key:
 
 -* add config reading function to the blockchain
 -* add a chain owner functionality to the config file
-- provide scaffolding for the three classes
+-* provide scaffolding for the three classes
+-* setup a main file for testing
+-* check initial testing
+    ^* so far generics look fine
+
+
+
+
+
+
