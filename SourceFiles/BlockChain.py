@@ -7,6 +7,8 @@
 
 import hashlib
 
+import Block
+import Transaction
 
 class BlockChain:
 
@@ -32,10 +34,19 @@ class BlockChain:
     # Constructor
     def __init__(self, chainName, memChain=True):
 
+        print("[START] Setting up BlockChain...")
+
         ## setup data members
         # setup the files
         self.chainName = chainName
         self.setupChainFiles()
+
+        print("Block Chain File Setup Completed.")
+
+        # Obtain Configuration parameters
+        self.setupMemConfig()
+
+        print("Obtained <" + self.chainName + "> Config Parameters")
 
         # Check chain file
         chainFile = open(self.chainFilePath, 'r')
@@ -47,11 +58,16 @@ class BlockChain:
             self.rootBlock = Block(0, 0, 0, [], 0, self.hashString(self.owner), 0)
             self.writeRootBlock()
 
+        print("Checked Chain File.")
+
         # Chain to Memory
         self.memChain = memChain
 
         if(memChain):
             self.setupMemChain()
+
+        print("Chain is in Memory.")
+        print("[COMPLETED] Setting up Block Chain.")
             
 
     # Constructor Helper Functions
@@ -62,13 +78,16 @@ class BlockChain:
 
         # setup the other file paths
         self.chainFilePath = self.chaiDirPath + "/" + self.chainName + ".chain"
-        self.unconfTransactPath = self.chainDirPath + "/" + self.chainName + "_transactions.chain"
+        self.unconfTransactPath = self.chainDirPath + "/" + self.chainName + ".transact"
         self.configPath = self.chainDirPath + "/" + self.chainName + ".config"
 
     def writeRootBlock(self):
 
         # write the root block attributes into the file
         niceBlockString = self.rootBlock.toNiceString()
+
+        print("- No Root Block, Writing one in...")
+        print("\n" + niceBlockString + "\n")
         
         chainFile = open(self.chainFilePath, 'w')
         chainFile.write(niceBlockString)
@@ -122,6 +141,24 @@ class BlockChain:
 
     ##################################################
     ## Helper Functions
+    # Config File reading helper functions
+    def setupMemConfig(self):
+
+        # read in the various config aspects of the Chain
+        configFile = open(self.configFilePath, 'r')
+
+        currentLine = configFile.readline()
+
+        while(currentLine):
+
+            # parse through the various apsects
+            lineSplit = currentLine.split(":")
+
+            if(lineSplit[0] == "Owner"):
+                self.owner = lineSplit[1]
+
+        print("- Owner found: " + self.owner)
+
     # Chain File reading helpers functions
     def setupMemChain(self):
             
@@ -133,9 +170,12 @@ class BlockChain:
 
         while(currentLine):
 
+            print("- Current Line: " + currentLine)
+
             # If empty, no block yet
             if(currentLine == ""):
                 addEmptyBlock()
+                print("-- No Block, Added Empty")
 
             # If "index" new block"
             elif(currentLine[5:] == "index"):
@@ -147,11 +187,18 @@ class BlockChain:
                 # start reading in the new block
                 currentBlockLines = [currentLine]
 
+            else:
+
+                # adding lines to current block
+                currentBlockLines += [currentLine]
+
             # Increment
             currentLine = chainFile.readline()
 
         # close the file
         chainFile.close() 
+
+        print("- Amount of Blocks Found: " + str(len(self.chain)))
 
     def addEmptyBlock(self):
     
@@ -184,7 +231,10 @@ class BlockChain:
 
         # add block to the list
         block = Block(index, blockType, timeStamp, transactions, proof, previousHash)
-        self.chain[index](block)
+        self.chain[index] = block
+
+        print("-- Added Block to Mem:")
+        print("\n" + block.toNiceString() + "\n")
 
     # Mem Block manipulation helper functions
     def hashBlock(block):

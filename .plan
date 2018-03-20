@@ -21,3 +21,11 @@ Key:
 - create the blockchain class for a node
 - create the block class maintaining the blocks
 - create the transaction class for maintianing transactions
+
+(5h)
+
+===19/3/2018===
+
+-* add config reading function to the blockchain
+-* add a chain owner functionality to the config file
+- provide scaffolding for the three classes
