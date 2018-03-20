@@ -7,8 +7,8 @@
 
 import hashlib
 
-import Block
-import Transaction
+from Block import *
+from Transaction import *
 
 class BlockChain:
 
@@ -22,7 +22,6 @@ class BlockChain:
 
     # Owner
     owner = ""
-    
 
     # Chain Blocks and Transactions
     memChain = True
@@ -55,7 +54,7 @@ class BlockChain:
 
         if(noLines):
             
-            self.rootBlock = Block(0, 0, 0, [], 0, self.hashString(self.owner), 0)
+            self.rootBlock = Block(0, 0, 0, [], 0, self.hashString(self.owner))
             self.writeRootBlock()
 
         print("Checked Chain File.")
@@ -77,7 +76,7 @@ class BlockChain:
         self.chainDirPath = "../Chains/" + self.chainName
 
         # setup the other file paths
-        self.chainFilePath = self.chaiDirPath + "/" + self.chainName + ".chain"
+        self.chainFilePath = self.chainDirPath + "/" + self.chainName + ".chain"
         self.unconfTransactPath = self.chainDirPath + "/" + self.chainName + ".transact"
         self.configPath = self.chainDirPath + "/" + self.chainName + ".config"
 
@@ -145,17 +144,25 @@ class BlockChain:
     def setupMemConfig(self):
 
         # read in the various config aspects of the Chain
-        configFile = open(self.configFilePath, 'r')
+        configFile = open(self.configPath, 'r')
 
         currentLine = configFile.readline()
 
         while(currentLine):
 
+            # take out the new line characters
+            currentLine = currentLine.replace('\n', '')
+
+            print("- Current Config Line: " + currentLine)
+
             # parse through the various apsects
             lineSplit = currentLine.split(":")
 
-            if(lineSplit[0] == "Owner"):
+            if(lineSplit[0] == "owner"):
                 self.owner = lineSplit[1]
+
+            # increment
+            currentLine = configFile.readline()
 
         print("- Owner found: " + self.owner)
 
@@ -170,11 +177,14 @@ class BlockChain:
 
         while(currentLine):
 
+            # take out the new line character
+            currentLine = currentLine.replace('\n', '')
+
             print("- Current Line: " + currentLine)
 
             # If empty, no block yet
             if(currentLine == ""):
-                addEmptyBlock()
+                self.addEmptyBlock()
                 print("-- No Block, Added Empty")
 
             # If "index" new block"
@@ -182,7 +192,7 @@ class BlockChain:
 
                 # add the block if there was a block read
                 if(len(currenBlockLines) != 0):
-                    addBlockFromLines(currentBlockLines)
+                    self.addBlockFromLines(currentBlockLines)
 
                 # start reading in the new block
                 currentBlockLines = [currentLine]
@@ -194,6 +204,10 @@ class BlockChain:
 
             # Increment
             currentLine = chainFile.readline()
+
+        # There is still one block left over potentially
+        if(len(currentBlockLines) != 0):
+            self.addBlockFromLines(currentBlockLines)
 
         # close the file
         chainFile.close() 
@@ -226,8 +240,12 @@ class BlockChain:
             transaction = Transaction(sender, reciever, amount)
             transactions.append(transaction)
 
-        proof = blockLines[-2].split(':')
-        previousHash = blockLines[-1].split(':')
+        proof = blockLines[-2].split(':')[-1]
+        previousHash = blockLines[-1].split(':')[-1]
+
+        # add empty blocks to fill chain uptill index
+        while(len(self.chain) <= index):
+            self.addEmptyBlock()
 
         # add block to the list
         block = Block(index, blockType, timeStamp, transactions, proof, previousHash)
@@ -306,7 +324,7 @@ class BlockChain:
 
 
     # Generic Helper Functions
-    def hashString(string):
+    def hashString(self, string):
 
         unicodeString = string.encode()
         return hashlib.sha256(unicodeString).hexdigest()

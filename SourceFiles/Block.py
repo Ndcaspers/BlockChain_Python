@@ -44,7 +44,7 @@ class Block:
     def toString(self):
 
         # for hashing, just a concatenation of everything
-        string = str(self.index) + str(self.proofType) + str(self.timeStamp) + self.proof + self.prevHash
+        string = str(self.index) + str(self.proofType) + str(self.timeStamp) + str(self.proof) + str(self.prevHash)
         return string
 
 
@@ -62,8 +62,8 @@ class Block:
             niceString += "reciever:" + transact.reciever + "\n"
             niceString += "amount:" + str(transact.amount) + "\n"
 
-        niceString += "proof:" + self.proof + "\n"
-        niceString += "prevHash:" + self.prevHash + "\n"
+        niceString += "proof:" + str(self.proof) + "\n"
+        niceString += "prevHash:" + str(self.prevHash) + "\n"
 
         # return the string
         return niceString
