@@ -7,13 +7,17 @@
 
 class Block:
 
-    # Data Members
+    ## Data Members
+    # Block fundamental aspects
     index = -1
     proofType = -1
     timeStamp = -1
     transactions = []
     proof = -1
     prevHash = -1
+
+    # block secondary features
+    proofTypes = []
 
     ##################################
     # Constructor
@@ -26,6 +30,8 @@ class Block:
         self.transactions = transactions
         self.proof = proof
         self.prevHash = prevHash
+
+        self.proofTypes = [self.timeStamp, self.proof, self.prevHash]
 
     
     ####################################
@@ -47,6 +53,10 @@ class Block:
         string = str(self.index) + str(self.proofType) + str(self.timeStamp) + str(self.proof) + str(self.prevHash)
         return string
 
+    def toStringProofType(self, proofType):
+
+        # based on the given proof type grab the corresponding string
+        return str(self.proofTypes[proofType])
 
     def toNiceString(self):
 

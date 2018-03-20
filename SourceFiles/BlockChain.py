@@ -6,6 +6,7 @@
 # Purpose: The class in charge of interacting, maintaining, and reading the block chain files.
 
 import hashlib
+import time
 
 from Block import *
 from Transaction import *
@@ -20,8 +21,10 @@ class BlockChain:
     UnconfTransactPath = ""
     configPath = ""
 
-    # Owner
+    # Chain Config Parameters
     owner = ""
+    coinCap = -1
+    coinHashKey = ""
 
     # Chain Blocks and Transactions
     memChain = True
@@ -54,7 +57,7 @@ class BlockChain:
 
         if(noLines):
             
-            self.rootBlock = Block(0, 0, 0, [], 0, self.hashString(self.owner))
+            self.rootBlock = Block(0, 0, time.time(), [], 0, self.hashConfigParameters())
             self.writeRootBlock()
 
         print("Checked Chain File.")
@@ -85,8 +88,8 @@ class BlockChain:
         # write the root block attributes into the file
         niceBlockString = self.rootBlock.toNiceString()
 
-        print("- No Root Block, Writing one in...")
-        print("\n" + niceBlockString + "\n")
+        print("- No Root Block, Writing one in...\n")
+        print(niceBlockString)
         
         chainFile = open(self.chainFilePath, 'w')
         chainFile.write(niceBlockString)
@@ -94,17 +97,45 @@ class BlockChain:
         
     ##################################################
     # Class Methods
-    def newBlock(self, proof, proofType, prevBlock):
+    def validProof(self, blockIndex, proofType, proof):
+
+        print("- Checking Proof <" + str(proof) + ">")
+        print("\tagainst block " + str(blockIndex) + " with proofType" + str(proofType))
+
+        # Get block hash of the proofType
+        block = self.chain[blockIndex]
+        blockHash = self.hashString(block.toStringProofType(proofType))
+
+        endHash = self.hashString(blockHash + proof)
+
+        print("- endHash: " + endHash)
+        print("- Accepted?: " + str(endHash[4:] == self.coinHashKey))
+
+        return (endHash[4:] == self.coinHashKey)
+
+    def newBlock(self, proof, proofType, prevBlockIndex):
+
+        print("- Creating New Block...")
+
+        # initialize
+        prevBlock = self.chain[prevBlockIndex]
+        currentBlockIndex = (prevBlockIndex * self.proofAmount) + proofType
+        
+        validBlock = self.validProof(prevBlockIndex, proofType, proof) and self.isEmptyBlock(blockIndex)
+
+        if(not(validBlock)):
+            return getEmptyBlock()
         
         # Create the new block
         index = (previous.getIndex() * 3) + proofType
         prevHash = hashBlock(prevBlock)
-        newBlock = Block(index, proofType, time(), self.unconfTransactions, proof, prevHash)
+        newBlock = Block(index, proofType, time.time(), self.unconfTransactions, proof, prevHash)
 
         # add it to the chain in its proper place
-        self.chain.insert(index, newBlock)
+        self.chain[index] = newBlock
 
         # need to rewrite the file
+        print("- Rewriting Chain File...")
         chainFile = open(self.chainFilePath, 'w')
         chainFile.write(chain[0].toNiceString())
         chainFile.close()
@@ -121,22 +152,28 @@ class BlockChain:
         # reset the unconfirmed transactions
         self.unconfTransactions = []
 
+        print("- New Block Added and Chain File Revised.")
+
         return newBlock
         
 
     def newTransaction(self, sender, reciever, amount):
 
+        print("- Creating a new transaction.")
+
         # create a new transaction
         transaction = Transaction(sender, reciever, amount)
 
         # need to check if the transaction is possibel
-        if(validTransaction):
+        if(self.validTransaction(transaction)):
+            print("- Transaction Accepted.")
             addUnconfTransaction(transaction)
             self.unconfTransactions.append(transaction)
-            return False
+            return True
 
         else:
-            return True
+            print("- Transaction Rejected.")
+            return False
 
     ##################################################
     ## Helper Functions
@@ -157,14 +194,24 @@ class BlockChain:
 
             # parse through the various apsects
             lineSplit = currentLine.split(":")
+            lineIndicator = lineSplit[0]
+            lineValue = lineSplit[1]
 
-            if(lineSplit[0] == "owner"):
-                self.owner = lineSplit[1]
+            if(lineIndicator == "owner"):
+                self.owner = lineValue
+
+            elif(lineIndicator == "coin cap"):
+                self.coinCap = int(lineValue)
+
+            elif(lineIndicator == "coin hash key"):
+                self.coinHashKey = lineValue
 
             # increment
             currentLine = configFile.readline()
 
         print("- Owner found: " + self.owner)
+        print("- Coin Cap found: " + str(self.coinCap))
+        print("- Coin Hash Key found: " + self.coinHashKey)
 
     # Chain File reading helpers functions
     def setupMemChain(self):
@@ -217,8 +264,8 @@ class BlockChain:
     def addEmptyBlock(self):
     
         # Create an empty block and add it to the list
-        emptyBlock = Block(-1, -1, -1, [], -1, -1)
-        self.chain.append(emptyBlock)
+        #emptyBlock = Block(-1, -1, -1, [], -1, -1)
+        self.chain.append(self.getEmptyBlock())
 
     def addBlockFromLines(self, blockLines):
 
@@ -251,8 +298,8 @@ class BlockChain:
         block = Block(index, blockType, timeStamp, transactions, proof, previousHash)
         self.chain[index] = block
 
-        print("-- Added Block to Mem:")
-        print("\n" + block.toNiceString() + "\n")
+        print("-- Added Block to Mem:\n")
+        print(block.toNiceString())
 
     # Mem Block manipulation helper functions
     def hashBlock(block):
@@ -324,10 +371,29 @@ class BlockChain:
 
 
     # Generic Helper Functions
+    def isEmptyBlock(self, index):
+
+        # Block could be outside chain, which is "empty"
+        if(index >= len(self.chain)):
+            return True
+
+        else:
+            block = self.chain[index]
+            return (block.getIndex() == -1 and block.getTimeStamp() == -1 and block.getProofType() == -1)
+
+    def getEmptyBlock(self):
+        
+        return Block(-1, -1, -1, [], -1, -1)
+
     def hashString(self, string):
 
         unicodeString = string.encode()
         return hashlib.sha256(unicodeString).hexdigest()
+
+    def hashConfigParameters(self):
+
+        rootHash = self.hashString(self.owner + str(self.coinCap))
+        return rootHash
 
         
 
