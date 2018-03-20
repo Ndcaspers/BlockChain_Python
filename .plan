@@ -18,9 +18,9 @@ Key:
 
 ===11/3/2018===
 
-- create the blockchain class for a node
-- create the block class maintaining the blocks
-- create the transaction class for maintianing transactions
+-* create the blockchain class for a node
+-* create the block class maintaining the blocks
+-* create the transaction class for maintianing transactions
 
 (5h)
 
@@ -35,7 +35,23 @@ Key:
 
 (1h 30m)
 
+===11/3/2018===
 
+-* look into proof of work ideas
+    ^ looking into using four character scheme at the beginning of the hash
+    ^ and just varying those characters
+-* determine a general plan for the next steps of the project
+    ^ need to provide mining endpoints, includes analyzing tree for amount of miners on each empty leaf
+    ^ need to provide a wanted proof of work scheme, that can be copied
+    ^ need a valid proof of work dont need a mining functionality for the node, but write one anyways
+    ^ following this, test the mining capability, block adding, and the transactions
+    ^ implement flask
+-* add scaffolding to the BlockChain.py public functions (ex: addBlock, addTransaction)
+-* fix minor scaffolding issues on BlockChain.py
+-* add a coin limit to the configuration parameters
+
+-* impement a valid proof function
+-* need to add the hashing key for proofs into the config
 
 
 
