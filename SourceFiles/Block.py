@@ -18,6 +18,7 @@ class Block:
 
     # block secondary features
     proofTypes = []
+    miners = 0
 
     ##################################
     # Constructor
@@ -35,15 +36,29 @@ class Block:
 
     
     ####################################
+    # class functions
+    def incrementMiners(self):
+        self.miners += 1
+
+    def decrementMiners(self):
+        self.miners -= 1
+
+    ####################################
     # Getter and Setter Functions
     def getIndex(self):
         return self.index
+
+    def getTimeStamp(self):
+        return self.timeStamp
 
     def getProofType(self):
         return self.proofType
 
     def getTransactions(self):
         return self.transactions
+
+    def getMiners(self):
+        return self.miners
 
     ###################################
     # toString Functions

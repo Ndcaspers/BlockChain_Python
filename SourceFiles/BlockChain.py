@@ -7,6 +7,7 @@
 
 import hashlib
 import time
+import math
 
 from Block import *
 from Transaction import *
@@ -18,19 +19,22 @@ class BlockChain:
     chainName = ""
     chainDirPath = ""
     chainFilePath = ""
-    UnconfTransactPath = ""
+    unconfTransactPath = ""
     configPath = ""
 
     # Chain Config Parameters
     owner = ""
     coinCap = -1
     coinHashKey = ""
+    proofsPerBlock = -1
+    chainLevel = -1
 
     # Chain Blocks and Transactions
     memChain = True
     chain = []
     #confTransactions = []
     unconfTransactions = []
+    minableBlocks = []
 
     #################################################
     # Constructor
@@ -68,7 +72,34 @@ class BlockChain:
         if(memChain):
             self.setupMemChain()
 
+        # Fill out chain with empty blocks
+        iteration = 0
+        idealTreeSize = 0
+
+        while(idealTreeSize < len(self.chain)):
+            idealTreeSize += (3 ** iteration)
+            iteration += 1
+
+        if(iteration != self.chainLevel):
+            print("- [ERROR]: chain level does not match length of chain")
+            return
+
+        if(self.fullLevel()):
+        
+            self.addNextLevel()
+            self.chainLevel += 1
+
+        while(len(self.chain) < idealTreeSize):
+            self.addEmptyBlock()
+
+        print("Chain Level: " + str(self.chainLevel))
+        print("Chain Block Amount: " + str(len(self.chain)))
         print("Chain is in Memory.")
+
+        # Obtain the info of blocks available for mining
+        print("Getting Minable Blocks...")
+        self.getMinableBlocks()
+
         print("[COMPLETED] Setting up Block Chain.")
             
 
@@ -113,26 +144,35 @@ class BlockChain:
 
         return (endHash[4:] == self.coinHashKey)
 
+
     def newBlock(self, proof, proofType, prevBlockIndex):
 
         print("- Creating New Block...")
 
         # initialize
         prevBlock = self.chain[prevBlockIndex]
-        currentBlockIndex = (prevBlockIndex * self.proofAmount) + proofType
+        index = (prevBlockIndex * self.proofsPerBlock) + proofType
         
-        validBlock = self.validProof(prevBlockIndex, proofType, proof) and self.isEmptyBlock(blockIndex)
+        validBlock = (self.validProof(prevBlockIndex, proofType, proof) and self.isEmptyBlock(index))
 
         if(not(validBlock)):
-            return getEmptyBlock()
+            return 1
         
         # Create the new block
-        index = (previous.getIndex() * 3) + proofType
-        prevHash = hashBlock(prevBlock)
+        prevHash = self.hashBlock(prevBlock)
         newBlock = Block(index, proofType, time.time(), self.unconfTransactions, proof, prevHash)
 
-        # add it to the chain in its proper place
+        # add it to the chain, remove it from minable
         self.chain[index] = newBlock
+        self.removeMinableBlock(index)
+
+        # if completed entire level in the tree add the next level
+        print("- Checking completion of the current level")
+        if(self.fullLevel()):
+
+            print("- Adding another level...")
+            self.addNextLevel()
+            self.chainLevel += 1
 
         # need to rewrite the file
         print("- Rewriting Chain File...")
@@ -144,17 +184,26 @@ class BlockChain:
 
         for i in range(1, len(chain)):
 
-            blockString = chain[i].toNiceString()
-            chainFile.write(blockString)
+            if(self.isEmptyBlock(i)):
+                chainFile.write('\n')
+
+            else:
+                blockString = chain[i].toNiceString()
+                chainFile.write(blockString)
 
         chainFile.close()
 
-        # reset the unconfirmed transactions
+        # reset the unconfirmed transactions in mem and file
+        print("- Resetting the unconf transactions and its file...")
         self.unconfTransactions = []
+        
+        unconfFile = open(self.unconfTransactPath, 'w')
+        unconfFile.write("")
+        unconfFile.close()
 
         print("- New Block Added and Chain File Revised.")
 
-        return newBlock
+        return 0
         
 
     def newTransaction(self, sender, reciever, amount):
@@ -174,6 +223,20 @@ class BlockChain:
         else:
             print("- Transaction Rejected.")
             return False
+
+    def getLeastMinedBlock(self):
+
+        # Get the least mined block
+        leastMiners = self.minableBlocks[0].getMiners()
+        minBlock = self.minableBlocks[0]
+
+        for block in self.minableBlocks:
+
+            if(block.getMiners() < leastMiners):
+                minBlock = block
+
+        return minBlock
+        
 
     ##################################################
     ## Helper Functions
@@ -206,6 +269,12 @@ class BlockChain:
             elif(lineIndicator == "coin hash key"):
                 self.coinHashKey = lineValue
 
+            elif(lineIndicator == "proofs per block"):
+                self.proofsPerBlock = int(lineValue)
+
+            elif(lineIndicator == "chain level"):
+                self.chainLevel = int(lineValue)
+
             # increment
             currentLine = configFile.readline()
 
@@ -221,6 +290,7 @@ class BlockChain:
             
         currentLine = chainFile.readline()
         currentBlockLines = []
+        blockCounter = 0
 
         while(currentLine):
 
@@ -231,18 +301,30 @@ class BlockChain:
 
             # If empty, no block yet
             if(currentLine == ""):
+
+                # add the block if there was a block read
+                if(len(currentBlockLines) != 0):
+                    self.addBlockFromLines(currentBlockLines)
+
+                # Adding empty block with the given index
                 self.addEmptyBlock()
+                currentBlockLines = []
+
+                # increment the block counter
                 print("-- No Block, Added Empty")
 
             # If "index" new block"
             elif(currentLine[5:] == "index"):
 
                 # add the block if there was a block read
-                if(len(currenBlockLines) != 0):
+                if(len(currentBlockLines) != 0):
                     self.addBlockFromLines(currentBlockLines)
 
                 # start reading in the new block
                 currentBlockLines = [currentLine]
+
+                # increment blockCounter
+                #blockCounter += 1
 
             else:
 
@@ -265,7 +347,7 @@ class BlockChain:
     
         # Create an empty block and add it to the list
         #emptyBlock = Block(-1, -1, -1, [], -1, -1)
-        self.chain.append(self.getEmptyBlock())
+        self.chain.append(self.getEmptyBlock(len(self.chain)))
 
     def addBlockFromLines(self, blockLines):
 
@@ -301,6 +383,28 @@ class BlockChain:
         print("-- Added Block to Mem:\n")
         print(block.toNiceString())
 
+    # Minable Block Helper Functions
+    def getMinableBlocks(self):
+
+        # Run through the list getting the empty blocks
+        for i in range(len(self.chain)):
+
+            if(self.isEmptyBlock(i)):
+                self.minableBlocks.append(self.chain[i])
+
+    def removeMinableBlock(self, blockIndex):
+
+        # move everything into temp and copy over
+        temp = []
+
+        for i in range(len(self.minableBlocks)):
+
+            if(not(self.minableBlocks[i].getIndex() == blockIndex)):
+                temp += [self.minableBlocks[i]]
+
+        self.minableBlocks = temp
+                
+
     # Mem Block manipulation helper functions
     def hashBlock(block):
 
@@ -310,6 +414,27 @@ class BlockChain:
 
         return hashlib.sha256(uniBlockString).hexdigest()
 
+    def removeMin
+
+    def fullLevel(self):
+
+        # check if any of the blocks are currently emtpy
+        for i in range(len(self.chain)):
+
+            if(self.isEmptyBlock(i)):
+                return False
+
+        return True
+
+    def addNextLevel(self):
+
+        # Adding the next full level to the chain tree
+        self.minableBlocks = []
+        totalAmount = (self.proofsPerBlock ** (self.chainLevel)) + len(self.chain)
+
+        while(len(self.chain) < totalAmount):
+            self.addEmptyBlock()
+            self.minableBlocks.append(self.chain[-1])
 
     # Transaction helper functions
     def validTransaction(self, transaction):
@@ -374,16 +499,16 @@ class BlockChain:
     def isEmptyBlock(self, index):
 
         # Block could be outside chain, which is "empty"
-        if(index >= len(self.chain)):
-            return True
+        #if(index >= len(self.chain)):
+            #return True
 
-        else:
-            block = self.chain[index]
-            return (block.getIndex() == -1 and block.getTimeStamp() == -1 and block.getProofType() == -1)
+        #else:
+        block = self.chain[index]
+        return (block.getTimeStamp() == -1 and block.getProofType() == -1)
 
-    def getEmptyBlock(self):
+    def getEmptyBlock(self, index):
         
-        return Block(-1, -1, -1, [], -1, -1)
+        return Block(index, -1, -1, [], -1, -1)
 
     def hashString(self, string):
 
