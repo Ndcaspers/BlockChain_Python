@@ -52,6 +52,14 @@ Key:
 
 -* impement a valid proof function
 -* need to add the hashing key for proofs into the config
+-* provide mining endpoints, basically determine the open leafs
+-* make sure the blocks are mined in levels
+    ^* maybe, most likely not properly enforced
+-* provide scaffolding for the minable blocks
 
+- need to test the endpoints and generic mining
+- includes implementing a basic mining function
+
+(3h)
 
 
