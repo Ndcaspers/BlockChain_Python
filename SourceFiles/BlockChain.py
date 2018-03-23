@@ -24,6 +24,7 @@ class BlockChain:
 
     # Chain Config Parameters
     owner = ""
+    ownerAddr = ""
     coinCap = -1
     coinHashKey = ""
     proofsPerBlock = -1
@@ -47,7 +48,9 @@ class BlockChain:
         self.chainName = chainName
         self.setupChainFiles()
 
+        print("===============================================")
         print("Block Chain File Setup Completed.")
+        print("===============================================")
 
         # Obtain Configuration parameters
         self.setupMemConfig()
@@ -61,10 +64,12 @@ class BlockChain:
 
         if(noLines):
             
-            self.rootBlock = Block(0, 0, time.time(), [], 0, self.hashConfigParameters())
+            self.rootBlock = Block(0, 0, time.time(), self.owner, self.ownerAddr, [], 0, self.hashConfigParameters())
             self.writeRootBlock()
 
+        print("===============================================")
         print("Checked Chain File.")
+        print("===============================================")
 
         # Chain to Memory
         self.memChain = memChain
@@ -72,12 +77,14 @@ class BlockChain:
         if(memChain):
             self.setupMemChain()
 
+        print("===============================================")
+
         # Fill out chain with empty blocks
         iteration = 0
         idealTreeSize = 0
 
         while(idealTreeSize < len(self.chain)):
-            idealTreeSize += (3 ** iteration)
+            idealTreeSize += (self.proofsPerBlock ** iteration)
             iteration += 1
 
         if(iteration != self.chainLevel):
@@ -86,6 +93,7 @@ class BlockChain:
 
         if(self.fullLevel()):
         
+            print("- Adding another level...")
             self.addNextLevel()
             self.chainLevel += 1
 
@@ -95,6 +103,8 @@ class BlockChain:
         print("Chain Level: " + str(self.chainLevel))
         print("Chain Block Amount: " + str(len(self.chain)))
         print("Chain is in Memory.")
+
+        print("=========================================")
 
         # Obtain the info of blocks available for mining
         print("Getting Minable Blocks...")
@@ -131,7 +141,7 @@ class BlockChain:
     def validProof(self, blockIndex, proofType, proof):
 
         print("- Checking Proof <" + str(proof) + ">")
-        print("\tagainst block " + str(blockIndex) + " with proofType" + str(proofType))
+        print("\tagainst block " + str(blockIndex) + " with proofType <" + str(proofType) + ">")
 
         # Get block hash of the proofType
         block = self.chain[blockIndex]
@@ -145,7 +155,7 @@ class BlockChain:
         return (endHash[4:] == self.coinHashKey)
 
 
-    def newBlock(self, proof, proofType, prevBlockIndex):
+    def newBlock(self, minerName, minerAddr, proof, proofType, prevBlockIndex):
 
         print("- Creating New Block...")
 
@@ -160,7 +170,7 @@ class BlockChain:
         
         # Create the new block
         prevHash = self.hashBlock(prevBlock)
-        newBlock = Block(index, proofType, time.time(), self.unconfTransactions, proof, prevHash)
+        newBlock = Block(index, proofType, minerName, minerAddr, time.time(), self.unconfTransactions, proof, prevHash)
 
         # add it to the chain, remove it from minable
         self.chain[index] = newBlock
@@ -224,6 +234,10 @@ class BlockChain:
             print("- Transaction Rejected.")
             return False
 
+    def getCoinHashKey(self):
+
+        return self.coinHashKey
+
     def getLeastMinedBlock(self):
 
         # Get the least mined block
@@ -236,7 +250,33 @@ class BlockChain:
                 minBlock = block
 
         return minBlock
-        
+
+    def getLeastMinedTarget(self):
+
+        # get the least mined proof of the blocks
+        leastMinedStat = self.minableBlocks[0].getLeastMinedStat()
+        leastMiners = leastMinedStat[0]
+        leastMinedProofType = leastMinedStat[1]
+        leastMinedProof = leastMinedStat[2]
+        leastMinedIndex = 0
+
+        iteration = 0
+
+        for block in self.minableBlocks:
+
+            currentStat = block.getLeastMinedStat()
+
+            if(currentStat[0] < leastMiners):
+
+                leastMiners = currentStat[0]
+                leastMinedProofType = currentStat[1]
+                leastMinedProof = currentStat[2]
+                leastMinedIndex = iteration
+
+            iteration += 1
+
+        # return proof and target
+        return [leastMinedIndex, leastMinedProofType, leastMinedProof]
 
     ##################################################
     ## Helper Functions
@@ -262,6 +302,9 @@ class BlockChain:
 
             if(lineIndicator == "owner"):
                 self.owner = lineValue
+
+            elif(lineIndicator == "owner address"):
+                self.ownerAddr = lineValue
 
             elif(lineIndicator == "coin cap"):
                 self.coinCap = int(lineValue)
@@ -355,11 +398,13 @@ class BlockChain:
         index = int( (blockLines[0].split(':'))[-1] )
         blockType = int ( (blockLines[1].split(':'))[-1] )
         timeStamp = float( (blockLines[2].split(':'))[-1] )
+        minerName = blockLines[3].split(':')[-1]
+        minerAddr = blockLines[4].split(':')[-1]
 
         # run through transactions
         transactions = []
 
-        for i in range(3, len(blockLines) - 2, 3):
+        for i in range(5, len(blockLines) - 2, 3):
 
             # create Transaction and append
             sender = ((blockLines[i]).split(':'))[-1]
@@ -377,7 +422,7 @@ class BlockChain:
             self.addEmptyBlock()
 
         # add block to the list
-        block = Block(index, blockType, timeStamp, transactions, proof, previousHash)
+        block = Block(index, blockType, timeStamp, minerName, minerAddr, transactions, proof, previousHash)
         self.chain[index] = block
 
         print("-- Added Block to Mem:\n")
@@ -413,8 +458,6 @@ class BlockChain:
         unicodeBlockString = blockString.encode()
 
         return hashlib.sha256(uniBlockString).hexdigest()
-
-    def removeMin
 
     def fullLevel(self):
 
@@ -454,7 +497,7 @@ class BlockChain:
             if(ownerFlag and block.getIndex() != -1 and block.getTimeStamp != -1 and len(block.getTransactions()) == 0):
                 senderBalance += 0.01
 
-            if(block.getMiner() == sender):
+            if(block.getMinerAddr() == sender):
                 senderBalance += 1.0
 
             for currentTransact in block.getTransactions():
@@ -508,7 +551,7 @@ class BlockChain:
 
     def getEmptyBlock(self, index):
         
-        return Block(index, -1, -1, [], -1, -1)
+        return Block(index, -1, -1, "", "", [], -1, -1)
 
     def hashString(self, string):
 
@@ -517,7 +560,7 @@ class BlockChain:
 
     def hashConfigParameters(self):
 
-        rootHash = self.hashString(self.owner + str(self.coinCap))
+        rootHash = self.hashString(self.owner  + self.ownerAddr + str(self.coinCap))
         return rootHash
 
         
