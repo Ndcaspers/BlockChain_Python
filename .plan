@@ -35,7 +35,7 @@ Key:
 
 (1h 30m)
 
-===11/3/2018===
+===20/3/2018===
 
 -* look into proof of work ideas
     ^ looking into using four character scheme at the beginning of the hash
@@ -57,9 +57,20 @@ Key:
     ^* maybe, most likely not properly enforced
 -* provide scaffolding for the minable blocks
 
-- need to test the endpoints and generic mining
-- includes implementing a basic mining function
+-* need to test the endpoints and generic mining
+    ^ tested dont work, need to retry
+-* includes implementing a basic mining function
+    ^* basic mining function seems to work, just issue with the minable blocks
 
 (3h)
 
+===22/3/2018===
+
+-* Create username/password system
+    ^ one in mind
+    ^* uncertain of its efficency/ability
+- need to fix the minable blocks, they need to point back
+    ^ better tree traversal
+
+(1h)
 
