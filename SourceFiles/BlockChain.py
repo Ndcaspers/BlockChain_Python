@@ -238,19 +238,29 @@ class BlockChain:
 
         return self.coinHashKey
 
+    def getMinableBlock(self, index):
+
+        # use the given index on the minable blocks
+        if(index >= len(self.minableBlocks)):
+            return [-1, -1]
+
+        return self.minableBlocks[index]
+    '''
     def getLeastMinedBlock(self):
 
         # Get the least mined block
         leastMiners = self.minableBlocks[0].getMiners()
         minBlock = self.minableBlocks[0]
 
-        for block in self.minableBlocks:
+        for blockIndex in self.minableBlocks:
 
-            if(block.getMiners() < leastMiners):
+            if(self.chain[blockIndex].getMiners() < leastMiners):
                 minBlock = block
 
         return minBlock
+    '''
 
+    '''
     def getLeastMinedTarget(self):
 
         # get the least mined proof of the blocks
@@ -277,6 +287,7 @@ class BlockChain:
 
         # return proof and target
         return [leastMinedIndex, leastMinedProofType, leastMinedProof]
+    '''
 
     ##################################################
     ## Helper Functions
@@ -434,8 +445,15 @@ class BlockChain:
         # Run through the list getting the empty blocks
         for i in range(len(self.chain)):
 
-            if(self.isEmptyBlock(i)):
-                self.minableBlocks.append(self.chain[i])
+            if(((i * self.proofsPerBlock) + 1) > len(self.chain)):
+                break
+
+            for j in range(1, self.proofsPerBlock):
+
+                blockIndex = (i * self.proofsPerBlock) + j
+
+                if(self.isEmptyBlock(blockIndex)):
+                    self.minableBlocks.append([blockIndex, j, self.chain[i].getProof(j)])
 
     def removeMinableBlock(self, blockIndex):
 
@@ -444,7 +462,7 @@ class BlockChain:
 
         for i in range(len(self.minableBlocks)):
 
-            if(not(self.minableBlocks[i].getIndex() == blockIndex)):
+            if(not((self.minableBlocks[i])[0] == blockIndex)):
                 temp += [self.minableBlocks[i]]
 
         self.minableBlocks = temp
@@ -475,9 +493,23 @@ class BlockChain:
         self.minableBlocks = []
         totalAmount = (self.proofsPerBlock ** (self.chainLevel)) + len(self.chain)
 
+        currentType = 1
+
         while(len(self.chain) < totalAmount):
+
+            parentIndex = (len(self.chain) - currentType) / self.proofsPerBlock
+            currentProof =  self.chain[parentIndex].getProof(currentType)
+            
+
             self.addEmptyBlock()
-            self.minableBlocks.append(self.chain[-1])
+            self.minableBlocks.append([parentIndex, currentType, currentProof])
+
+            # increment current Type
+            currentType += 1
+
+            if(currentType > self.proofsPerBlock):
+                currentType = 1
+
 
     # Transaction helper functions
     def validTransaction(self, transaction):

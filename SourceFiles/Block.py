@@ -20,8 +20,8 @@ class Block:
 
     # block secondary features
     proofTypes = []
-    miners = [0, 0, 0, 0] # might need to make this more dynamic
-    totalMiners = 0
+    #miners = [0, 0, 0, 0] # might need to make this more dynamic
+    #totalMiners = 0
 
     ##################################
     # Constructor
@@ -42,6 +42,7 @@ class Block:
     
     ####################################
     # class functions
+    '''
     def getLeastMinedStat(self):
 
         # providing stat of 
@@ -70,6 +71,10 @@ class Block:
             self.miners[minedProof] -= 1
 
         self.totalMiners -= 1
+    '''
+
+    def getProof(self, proofIndex):
+        return self.proofTypes[proofIndex]
 
     ####################################
     # Getter and Setter Functions
@@ -91,8 +96,10 @@ class Block:
     def getTransactions(self):
         return self.transactions
 
+    '''
     def getMiners(self):
         return self.miners
+    '''
 
     ###################################
     # toString Functions

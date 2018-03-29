@@ -17,7 +17,7 @@ def mine(chain):
 
     # get the least mined block and key for validation
     coinHashKey = chain.getCoinHashKey()
-    target = chain.getLeastMinedTarget()
+    target = chain.getMinableBlockTarget(0)
 
     print("[MINER] coin hash key: " + coinHashKey)
 
