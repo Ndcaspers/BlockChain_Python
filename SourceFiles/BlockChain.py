@@ -29,6 +29,7 @@ class BlockChain:
     coinHashKey = ""
     proofsPerBlock = -1
     chainLevel = -1
+    derivationDepth = -1
 
     # Chain Blocks and Transactions
     memChain = True
@@ -140,8 +141,8 @@ class BlockChain:
     # Class Methods
     def validProof(self, blockIndex, proofType, proof):
 
-        print("- Checking Proof <" + str(proof) + ">")
-        print("\tagainst block " + str(blockIndex) + " with proofType <" + str(proofType) + ">")
+        #print("- Checking Proof <" + str(proof) + ">")
+        #print("\tagainst block " + str(blockIndex) + " with proofType <" + str(proofType) + ">")
 
         # Get block hash of the proofType
         block = self.chain[blockIndex]
@@ -149,10 +150,19 @@ class BlockChain:
 
         endHash = self.hashString(blockHash + proof)
 
-        print("- endHash: " + endHash)
-        print("- Accepted?: " + str(endHash[4:] == self.coinHashKey))
+        #print("- endHash: " + endHash)
+        #print("- endHash[:4]: " + endHash[:4])
+        #print("- Accepted?: " + str(endHash[:4] == self.coinHashKey))
 
-        return (endHash[4:] == self.coinHashKey)
+        if(endHash[:4] == '00000'):
+            print("- Checking Proof <" + str(proof) + ">")
+            print("\tagainst block " + str(blockIndex) + " with proofType <" + str(proofType) + ">")
+            print("- endHash: " + endHash + " (length: " + str(len(endHash)) + ")")
+            print("- Accepted?: " + str(endHash[:4] == '00000'))#self.coinHashKey))
+
+
+        #self.coinHashKey
+        return (endHash[:4] == '00000')
 
 
     def newBlock(self, minerName, minerAddr, proof, proofType, prevBlockIndex):
@@ -238,14 +248,16 @@ class BlockChain:
 
         return self.coinHashKey
 
-    def getMinableBlock(self, index):
+    def getMinableBlockTarget(self, index):
 
         # use the given index on the minable blocks
         if(index >= len(self.minableBlocks)):
             return [-1, -1]
 
         return self.minableBlocks[index]
-    '''
+
+    ###############################################################################
+    # Remove
     def getLeastMinedBlock(self):
 
         # Get the least mined block
@@ -258,9 +270,7 @@ class BlockChain:
                 minBlock = block
 
         return minBlock
-    '''
 
-    '''
     def getLeastMinedTarget(self):
 
         # get the least mined proof of the blocks
@@ -287,7 +297,7 @@ class BlockChain:
 
         # return proof and target
         return [leastMinedIndex, leastMinedProofType, leastMinedProof]
-    '''
+    #######################################################################################
 
     ##################################################
     ## Helper Functions
@@ -304,7 +314,7 @@ class BlockChain:
             # take out the new line characters
             currentLine = currentLine.replace('\n', '')
 
-            print("- Current Config Line: " + currentLine)
+            #print("- Current Config Line: " + currentLine)
 
             # parse through the various apsects
             lineSplit = currentLine.split(":")
@@ -329,12 +339,19 @@ class BlockChain:
             elif(lineIndicator == "chain level"):
                 self.chainLevel = int(lineValue)
 
+            elif(lineIndicator == "chain derivation depth"):
+                self.derivationDepth = int(lineValue)
+
             # increment
             currentLine = configFile.readline()
 
         print("- Owner found: " + self.owner)
+        print("- Owner Address: " + self.ownerAddr)
         print("- Coin Cap found: " + str(self.coinCap))
         print("- Coin Hash Key found: " + self.coinHashKey)
+        print("- Proofs Per Block: " + str(self.proofsPerBlock))
+        print("- Chain Level: " + str(self.chainLevel))
+        print("- Derivation Depth: " + str(self.derivationDepth))
 
     # Chain File reading helpers functions
     def setupMemChain(self):
@@ -443,14 +460,22 @@ class BlockChain:
     def getMinableBlocks(self):
 
         # Run through the list getting the empty blocks
+        print("Chain Length: " + str(len(self.chain)))
+    
         for i in range(len(self.chain)):
 
-            if(((i * self.proofsPerBlock) + 1) > len(self.chain)):
+            print("Current Parent: " + str(i))
+
+            if(((i * self.proofsPerBlock) + 1) >= len(self.chain)):
                 break
 
-            for j in range(1, self.proofsPerBlock):
+            print("Current Parent: " + str(i))
+
+            for j in range(1, self.proofsPerBlock + 1):
 
                 blockIndex = (i * self.proofsPerBlock) + j
+
+                print("Current Child: " + str(j) + ", " + str(blockIndex))
 
                 if(self.isEmptyBlock(blockIndex)):
                     self.minableBlocks.append([blockIndex, j, self.chain[i].getProof(j)])

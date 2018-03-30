@@ -34,6 +34,7 @@ def mine(chain):
     attemptStr = str(attempt)
 
     iteration = 0
+    sets = 0
 
     while(not(chain.validProof(targetIndex, targetProofType, attemptStr))):
 
@@ -43,9 +44,10 @@ def mine(chain):
 
         iteration += 1
 
-        if(iteration == 100):
-            print("100 iterations done... stopping")
-            break
+        if(iteration == 100000):
+            print("< " + str(sets) + ", " + str(iteration) + "> iterations done... stopping")
+            sets += 1
+            iteration = 0
     
     print("SUCCCCCCC!!: \n Proper proof: " + attemptStr)
 
