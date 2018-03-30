@@ -69,8 +69,24 @@ Key:
 -* Create username/password system
     ^ one in mind
     ^* uncertain of its efficency/ability
-- need to fix the minable blocks, they need to point back
+-* need to fix the minable blocks, they need to point back
     ^ better tree traversal
+    ^* not better tree traversal,
+    ^* just need to remember minable blocks dont exist as blocks yet
 
 (1h)
+
+===29/3/2018===
+
+-* fixed the fixes to the minable blocks
+    ^* might need to throw in some tests
+-* add another level of hashing to the user name
+-* obtain one of the next blocks
+    ^* apparently the first proof is 37076
+- need to adjust the difficulty with increase in blocks
+
+(1h)
+
+
+    
 
