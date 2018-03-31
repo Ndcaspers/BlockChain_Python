@@ -83,9 +83,31 @@ Key:
 -* add another level of hashing to the user name
 -* obtain one of the next blocks
     ^* apparently the first proof is 37076
-- need to adjust the difficulty with increase in blocks
+-* need to adjust the difficulty with increase in blocks
+    ^* difficulty based on the height of the tree
+    ^* adding four bit zeros to the target for every height increment
 
 (1h)
+
+===30/3/2018===
+
+-* going to cap the coin amount to a static amount
+    ^* basically done by the difficulty
+-* redo the coin hash to be more within the hexidecimal range
+    ^* dont really need to if just working off of the hex string
+-* test the addition of new blocks
+-* need to add a class for user info packets
+    ^* under UserInfo.py
+    ^* needs to be node/server side
+- test out the transactions
+-* add the address aspect to transactions
+
+(1h)
+
+===31/3/2018===
+
+- need to test out the user/password precautions set in
+
 
 
     
