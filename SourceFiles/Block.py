@@ -42,37 +42,6 @@ class Block:
     
     ####################################
     # class functions
-    '''
-    def getLeastMinedStat(self):
-
-        # providing stat of 
-        minMiners = self.miners[1]
-        minIndex = 1
-
-        for i in range(2, len(self.miners)):
-
-            if(self.miners[i] < minMiners):
-                minMiners = self.miners[i]
-                minIndex = 1
-
-        return [minMiners, minIndex, self.proofTypes[minIndex]]
-                
-
-    def incrementMiners(self, minedProof):
-
-        if(minedProof != -1):
-            self.miners[minedProof] += 1
-
-        self.totalMiners += 1
-
-    def decrementMiners(self, minedProof):
-
-        if(minedProof != -1):
-            self.miners[minedProof] -= 1
-
-        self.totalMiners -= 1
-    '''
-
     def getProof(self, proofIndex):
         return self.proofTypes[proofIndex]
 
@@ -95,11 +64,6 @@ class Block:
 
     def getTransactions(self):
         return self.transactions
-
-    '''
-    def getMiners(self):
-        return self.miners
-    '''
 
     ###################################
     # toString Functions
@@ -128,7 +92,9 @@ class Block:
         for transact in self.transactions:
 
             niceString += "sender:" + transact.sender + "\n"
+            niceString += "senderAddr:" + transact.senderAddr + "\n"
             niceString += "reciever:" + transact.reciever + "\n"
+            niceString += "recieverAddr:" + transact.recieverAddr + "\n"
             niceString += "amount:" + str(transact.amount) + "\n"
 
         niceString += "proof:" + str(self.proof) + "\n"

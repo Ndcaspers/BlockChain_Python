@@ -20,6 +20,8 @@ class Transaction:
 
         # Setup the data members
         self.sender = sender
+        self.senderAddr = senderAddr
         self.reciever = reciever
+        self.recieverAddr = recieverAddr
         self.amount = amount
 

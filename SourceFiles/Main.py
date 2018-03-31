@@ -9,15 +9,16 @@ import hashlib
 
 from BlockChain import BlockChain
 from Block import Block
+from UserInfo import *
 
 # generic mining thing
-def mine(chain, miner, minerAddr):
+def mine(chain, minerInfo):
 
     print("Mining...")
 
     # get the least mined block and key for validation
     coinHashKey = chain.getCoinHashKey()
-    target = chain.getMinableBlockTarget(0)
+    target = chain.getMinableBlockTarget(1)
 
     print("[MINER] coin hash key: " + coinHashKey)
 
@@ -51,7 +52,17 @@ def mine(chain, miner, minerAddr):
     
     print("SUCCCCCCC!!: \n Proper proof: " + attemptStr)
 
-    chain.newBlock(miner, minerAddr, attemptStr, targetProofType, targetIndex)
+    chain.newBlock(minerInfo, attemptStr, targetProofType, targetIndex)
+
+def createTransaction(chain, displayName, userName, password, reciever, recieverAddr, amount):
+
+    # pack into a UserInfo and do transaction
+    userInfo = chain.packUserInfo(displayName, userName, password)
+    
+    result = chain.newTransaction(userInfo, reciever, recieverAddr, amount)
+
+    print("====================================================")
+    print(str(result))
 
 # Main for testing
 def main():
@@ -63,13 +74,14 @@ def main():
 
     print("Block Chain Setup Completed.")
 
-    # practice mining
+    # practice transactions
     print("================================================")
 
     miner = "Spurs"
     minerAddr = "7879b222fa18213809713d2e947bceb4cc77c19291ab6e95b44d0b81d9de052c"
 
-    mine(blockChain, miner, minerAddr)
+    miner2 = "Banker"
+    miner2Addr = "3489456642854b3d035f697d9e73cee03f4f27a56db326f8f530d9212d7f2641"
 
 
 # Starting the main function
