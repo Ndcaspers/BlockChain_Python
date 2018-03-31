@@ -99,14 +99,20 @@ Key:
 -* need to add a class for user info packets
     ^* under UserInfo.py
     ^* needs to be node/server side
-- test out the transactions
+-* test out the transactions
 -* add the address aspect to transactions
 
 (1h)
 
 ===31/3/2018===
 
-- need to test out the user/password precautions set in
+-* need to test out the user/password precautions set in
+    ^* kind of finished, unsure on security
+-* pull unconfirmed transactions into memory
+-* test unconfirmed transactions before confirmation
+-* test unconfimred transactions being confirmed with the mining of a block
+-* add verification and uniqueness to the transactions
+- add the creation of a new currency
 
 
 
