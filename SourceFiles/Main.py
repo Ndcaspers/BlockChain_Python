@@ -11,7 +11,7 @@ from BlockChain import BlockChain
 from Block import Block
 
 # generic mining thing
-def mine(chain):
+def mine(chain, miner, minerAddr):
 
     print("Mining...")
 
@@ -51,6 +51,8 @@ def mine(chain):
     
     print("SUCCCCCCC!!: \n Proper proof: " + attemptStr)
 
+    chain.newBlock(miner, minerAddr, attemptStr, targetProofType, targetIndex)
+
 # Main for testing
 def main():
 
@@ -63,7 +65,11 @@ def main():
 
     # practice mining
     print("================================================")
-    mine(blockChain)
+
+    miner = "Spurs"
+    minerAddr = "7879b222fa18213809713d2e947bceb4cc77c19291ab6e95b44d0b81d9de052c"
+
+    mine(blockChain, miner, minerAddr)
 
 
 # Starting the main function

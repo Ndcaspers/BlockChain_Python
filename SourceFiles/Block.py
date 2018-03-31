@@ -122,7 +122,7 @@ class Block:
         niceString += "proofType:" + str(self.proofType) + "\n"
         niceString += "timeStamp:" + str(self.timeStamp) + "\n"
         niceString += "minerName:" + self.minerName + "\n"
-        niceString += "minerAddr:" + self.minerAddr + "\n"
+        niceString += "minerAddr:" + str(self.minerAddr) + "\n"
 
         # need to run through the transactions
         for transact in self.transactions:

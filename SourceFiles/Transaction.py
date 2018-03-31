@@ -9,12 +9,14 @@ class Transaction:
 
     # Data members
     sender = ""
+    senderAddr = ""
     reciever = ""
+    recieverAddr = ""
     amount = -1
 
     ############################
     # Constructor
-    def __init__(self, sender, reciever, amount):
+    def __init__(self, sender, senderAddr, reciever, recieverAddr, amount):
 
         # Setup the data members
         self.sender = sender
