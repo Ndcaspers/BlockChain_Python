@@ -289,6 +289,55 @@ class BlockChain:
 
         return self.minableBlocks[index]
 
+    def getMinerBalance(self, miner, minerAddr):
+    
+        # Run through the blocks and get balance
+        minerBalance = 0.0
+
+        # check if owner
+        ownerFlag = (miner == self.owner) and (minerAddr == self.ownerAddr)
+
+        print("- miner is owner of the chain? " + str(ownerFlag))
+        print("- miner Addr: " + minerAddr)
+        print("- owner Addr: " + self.ownerAddr)
+
+        # run through each block
+        for block in self.chain:
+
+            if(ownerFlag and not(self.isEmptyBlock(block.getIndex()))):
+                minerBalance += 0.01
+
+            if(block.getMinerName() == miner and block.getMinerAddr() == minerAddr):
+                minerBalance += 10.0
+
+            #print("- Sender Current Balance: " + str(senderBalance))
+
+            for currentTransact in block.getTransactions():
+
+                if(currentTransact.sender == miner and currentTransact.senderAddr == minerAddr):
+                    minerBalance -= currentTransact.amount
+
+                elif(currentTransact.reciever == miner and currentTransact.recieverAddr == minerAddr):
+                    minerBalance += currentTransact.amount
+
+        # run through the unconfirmed transactions
+        for unconfTransact in self.unconfTransactions:
+
+            #print("- Sender Current Balance: " + str(senderBalance))
+
+            # check if sending amount vs balance
+            if(unconfTransact.sender == miner and unconfTransact.senderAddr == minerAddr):
+                minerBalance -= unconfTransact.amount
+
+            elif(unconfTransact.reciever == miner and unconfTransact.recieverAddr == minerAddr):
+                minerBalance += unconfTransact.amount
+
+            #print("- Sender Current Balance: " + str(senderBalance))
+
+        # check amount vs sender balance
+        print("- Miner Balance: " + str(minerBalance))
+        return (minerBalance) 
+
     def verifyUserMatchAddr(self, displayName, addr):
 
         # run through the blocks and transactions looking for the same name
@@ -418,7 +467,7 @@ class BlockChain:
             # take out the new line character
             currentLine = currentLine.replace('\n', '')
 
-            print("- Current Line: " + currentLine)
+            #print("- Current Line: " + currentLine)
 
             # If empty, no block yet
             if(currentLine == ""):
@@ -432,7 +481,7 @@ class BlockChain:
                 currentBlockLines = []
 
                 # increment the block counter
-                print("-- No Block, Added Empty")
+                #print("-- No Block, Added Empty")
 
             # If "index" new block"
             elif(currentLine[:5] == "index"):
@@ -505,8 +554,8 @@ class BlockChain:
         block = Block(index, blockType, timeStamp, minerName, minerAddr, transactions, proof, previousHash)
         self.chain[index] = block
 
-        print("-- Added Block to Mem:\n")
-        print(block.toNiceString())
+        #print("-- Added Block to Mem:\n")
+        #print(block.toNiceString())
 
     # Setup Unconf Transactions in memory function and helpers
     def setupMemUnconfTransact(self):
@@ -522,7 +571,7 @@ class BlockChain:
         while(currentLine):
 
             currentLine = currentLine.replace('\n', '')
-            print("- Current Line: " + currentLine)
+            #print("- Current Line: " + currentLine)
 
             # split the current line
             lineIndicator = currentLine.split(':')[0]
@@ -692,7 +741,7 @@ class BlockChain:
 
                 senderBalance += 10.0
 
-            print("- Sender Current Balance: " + str(senderBalance))
+            #print("- Sender Current Balance: " + str(senderBalance))
 
             for currentTransact in block.getTransactions():
 
@@ -716,7 +765,7 @@ class BlockChain:
         # run through the unconfirmed transactions
         for unconfTransact in self.unconfTransactions:
 
-            print("- Sender Current Balance: " + str(senderBalance))
+            #print("- Sender Current Balance: " + str(senderBalance))
 
             # check if sending amount vs balance
             if(unconfTransact.sender == sender):
@@ -735,7 +784,7 @@ class BlockChain:
 
                 senderBalance += unconfTransact.amount
 
-            print("- Sender Current Balance: " + str(senderBalance))
+            #print("- Sender Current Balance: " + str(senderBalance))
 
         # check amount vs sender balance
         print("- Does balance check out: " + str(sendingAmount) + " <= " + str(senderBalance))
@@ -782,8 +831,13 @@ class BlockChain:
         return (block.getTimeStamp() == -1 and block.getProofType() == -1)
 
     def getEmptyBlock(self, index):
-        
         return Block(index, -1, -1, "", "", [], -1, -1)
+
+    def getChainName(self):
+        return self.chainName
+
+    def getDerivationLevel(self):
+        return self.derivationDepth
 
     def hashStringtoHex(self, string):
 
