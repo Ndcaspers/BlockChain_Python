@@ -113,6 +113,12 @@ Key:
 -* test unconfimred transactions being confirmed with the mining of a block
 -* add verification and uniqueness to the transactions
 - add the creation of a new currency
+-* create a blockchain manager class, for managing the various currencies
+- test blockChain manager
+- determine an amount it takes to create a currency
+- may need to make the block chain and block chain manager more dynamic less absolute in pathing
+
+(3h)
 
 
 
